@@ -76,7 +76,7 @@ private:
 	void DecompileJumpInstruction( VMState& state, int arg1 ) const;
 	void DecompileDoWhileLoop( VMState& state, int jumpAddress ) const;
 	void DecompileSwitchBlock( VMState& state ) const;
-	void PrintOpcode( std::ostream& out, int pos, const Instruction& op ) const;
+	void PrintOpcode( std::ostream& out, size_t pos, const Instruction& op ) const;
 
 public:
 	NutFunction()

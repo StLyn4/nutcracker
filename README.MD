@@ -8,8 +8,4 @@ Unfortunately a license was not provided, hence why everything in this repositor
 
 ## Description
 
-This fork's goal is to decompile the Squirrel 2.2.4 64-bit scripts present in the PC release of `Digimon Story Cyber Sleuth: Complete Edition` and potentially other releases of the game and/or games produced by MediaVision.
-
-My changes include converting the project to CMake and converting the code from 32-bit Squirrel to 64-bit Squirrel.
-The conversion might not be complete yet.
-
+This fork's goal is to decompile the Squirrel 2.x 32-bit and 64-bit scripts.

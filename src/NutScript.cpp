@@ -18,7 +18,7 @@ bool g_DebugMode = false;
 const NutFunction* NutFunction::FindFunction( const std::string& name ) const
 {
 	string localName, subName;
-	unsigned int p = name.find("::");
+	size_t p = name.find("::");
 
 	if (p == std::string::npos)
 	{
@@ -78,15 +78,15 @@ void NutFunction::Load( BinaryReader& reader )
 	reader.ReadSQStringObject(m_Name);
 
 	reader.ConfirmOnPart();
-	
-	int64_t nLiterals = reader.ReadInt64();
-	int64_t nParameters = reader.ReadInt64();
-	int64_t nOuterValues = reader.ReadInt64();
-	int64_t nLocalVarInfos = reader.ReadInt64();
-	int64_t nLineInfos = reader.ReadInt64();
-	int64_t nDefaultParams = reader.ReadInt64();
-	int64_t nInstructions = reader.ReadInt64();
-	int64_t nFunctions = reader.ReadInt64();
+
+	int64_t nLiterals = reader.ReadArchInt();
+	int64_t nParameters = reader.ReadArchInt();
+	int64_t nOuterValues = reader.ReadArchInt();
+	int64_t nLocalVarInfos = reader.ReadArchInt();
+	int64_t nLineInfos = reader.ReadArchInt();
+	int64_t nDefaultParams = reader.ReadArchInt();
+	int64_t nInstructions = reader.ReadArchInt();
+	int64_t nFunctions = reader.ReadArchInt();
 	
 	reader.ConfirmOnPart();
 
@@ -105,7 +105,7 @@ void NutFunction::Load( BinaryReader& reader )
 	m_OuterValues.resize((size_t) nOuterValues);
 	for(int i = 0; i < nOuterValues; ++i)
 	{
-		m_OuterValues[i].type = reader.ReadInt32();
+		m_OuterValues[i].type = reader.ReadArchInt();
 		m_OuterValues[i].src.Load(reader);
 		m_OuterValues[i].name.Load(reader);
 	}
@@ -116,16 +116,20 @@ void NutFunction::Load( BinaryReader& reader )
 	for(int i = 0; i < nLocalVarInfos; ++i)
 	{
 		reader.ReadSQStringObject(m_Locals[i].name);
-		m_Locals[i].pos = reader.ReadInt64();
-		m_Locals[i].start_op = reader.ReadInt64();
-		m_Locals[i].end_op = reader.ReadInt64();
+		m_Locals[i].pos = reader.ReadArchInt();
+		m_Locals[i].start_op = reader.ReadArchInt();
+		m_Locals[i].end_op = reader.ReadArchInt();
 		m_Locals[i].foreachLoopState = false;
 	}
 
 	reader.ConfirmOnPart();
 
 	m_LineInfos.resize((size_t) nLineInfos);
-	reader.Read(&(m_LineInfos.front()), nLineInfos * sizeof(LineInfo));
+	for (int i = 0; i < nLineInfos; ++i)
+	{
+		m_LineInfos[i].line = reader.ReadArchInt();
+		m_LineInfos[i].op = reader.ReadArchInt();
+	}
 
 	reader.ConfirmOnPart();
 	
@@ -152,7 +156,7 @@ void NutFunction::Load( BinaryReader& reader )
 		m_Functions[i].SetIndex(i);
 	}
 
-	m_StackSize = reader.ReadInt64();
+	m_StackSize = reader.ReadArchInt();
 	m_IsGenerator = reader.ReadBool();
 	m_GotVarParams = reader.ReadBool();
 
@@ -210,15 +214,18 @@ void NutScript::LoadFromStream( std::istream& in )
 	if (reader.ReadUInt16() != 0xFAFA) 
 		throw BadFormatError();
 
-	if (reader.ReadInt64() != 'SQIR') 
+	if (reader.CheckArch() == UNKNOWN)
+		throw Error("NUT file compiled for different architecture that expected.");
+
+	if (reader.ReadArchInt() != 'SQIR')
 		throw BadFormatError();
-	
-	if (reader.ReadInt64() != sizeof(char))
+
+	if (reader.ReadArchInt() != sizeof(char))
 		throw Error("NUT file compiled for different size of char that expected.");
 
 	m_main.Load(reader);
 
-	if (reader.ReadUInt64() != 'TAIL') 
+	if (reader.ReadArchInt() != 'TAIL')
 		throw BadFormatError();
 }
 

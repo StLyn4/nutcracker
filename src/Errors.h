@@ -16,14 +16,14 @@ private:
 public:
 	Error( const Error& r );
 	explicit Error( const char* format, ... );
-	virtual const char* what();
+	virtual const char* what() const noexcept;
 };
 
 
 // ************************************************************************************************************************************
 struct BadFormatError : public std::exception
 {
-	virtual const char* what()
+	virtual const char* what() const noexcept
 	{
 		return "Bad .nut binary file format.";
 	}

@@ -6,6 +6,12 @@
 #include <stdint.h>
 #include "Errors.h"
 
+enum ArchType
+{
+	UNKNOWN,
+	X32,
+	X64,
+};
 
 // ************************************************************************************************************************************
 class BinaryReader
@@ -16,12 +22,48 @@ private:
 	// Delete default methods
 	BinaryReader();
 	BinaryReader( const BinaryReader& );
-	BinaryReader& operator = ( const BinaryReader& );
+	BinaryReader& operator=( const BinaryReader& );
 
 public:
+	ArchType targetArch;
+
 	explicit BinaryReader( std::istream& in )
 	: _in(in)
 	{
+		targetArch = UNKNOWN;
+	}
+
+	// ******************************************************************************
+	ArchType CheckArch( void )
+	{
+		std::streamoff currentPos = _in.tellg();
+
+		_in.seekg(2, _in.beg);
+		if (ReadInt32() == 'SQIR')
+		{
+			targetArch = X32;
+		}
+
+		_in.seekg(2, _in.beg);
+		if (ReadInt64() == 'SQIR')
+		{
+			targetArch = X64;
+		}
+
+		_in.seekg(currentPos, _in.beg);
+		return targetArch;
+	}
+
+	// ******************************************************************************
+	uint64_t ReadArchUInt( void )
+	{
+		return targetArch == X32 ? ReadUInt32() : ReadUInt64();
+	}
+
+	// ******************************************************************************
+	int64_t ReadArchInt( void )
+	{
+		return targetArch == X32 ? ReadInt32() : ReadInt64();
 	}
 
 	// ******************************************************************************
@@ -38,7 +80,6 @@ public:
 
 		return value;
 	}
-
 
 	// ******************************************************************************
 	int32_t ReadInt32( void )
@@ -199,7 +240,9 @@ public:
 	// ******************************************************************************
 	void ConfirmOnPart( void )
 	{
-		if (ReadInt64() != 'PART')
+		int64_t data = ReadArchInt();
+
+		if (data != 'PART')
 			throw Error("Bad format of source binary file (PART marker was not match).");
 	}
 
@@ -207,14 +250,14 @@ public:
 	// ******************************************************************************
 	void ReadSQString( std::string& str )
 	{
-		uint64_t len = ReadUInt64();
+		int64_t len = ReadArchInt();
 		str.clear();
 		str.reserve((size_t) len);
 
 		while(len > 0)
 		{
 			char buffer[128];
-			uint64_t chunk = std::min((uint64_t) 128, len);
+			int64_t chunk = std::min((int64_t) 128, len);
 
 			Read(buffer, chunk);
 
@@ -230,7 +273,7 @@ public:
 		static const int StringObjectType = 0x10 | 0x08000000;
 		static const int NullObjectType = 0x01 | 0x01000000;
 
-		int type = ReadInt32();
+		int32_t type = ReadInt32();
 
 		if (type == StringObjectType)
 			ReadSQString(str);

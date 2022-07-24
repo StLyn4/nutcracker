@@ -24,13 +24,13 @@ struct indent
 // ******************************************************************************
 struct spaces
 {
-	int _n;
+	size_t _n;
 
-	spaces( int n ) : _n(n) {}
+	spaces( size_t n ) : _n(n) {}
 
 	friend std::ostream& operator << ( std::ostream& os, const spaces& _i )
 	{
-		for(int i = 0; i < _i._n; ++i)
+		for(size_t i = 0; i < _i._n; ++i)
 			os.put(' ');
 
 		return os;

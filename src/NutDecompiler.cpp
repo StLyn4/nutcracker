@@ -226,7 +226,7 @@ public:
 		m_IP = 0;
 		m_Block = BlockStatementPtr(new BlockStatement);
 		m_BlockState.blockStart = -1;
-		m_BlockState.blockEnd = parent.m_Instructions.size() + 2;
+		m_BlockState.blockEnd = (int)parent.m_Instructions.size() + 2;
 
 		// Find all JNZ instructions in code with beck jump - this will be oure do..while loops
 		for( int i = 0; i < (int)parent.m_Instructions.size(); ++i)
@@ -1556,7 +1556,7 @@ void NutFunction::DecompileSwitchBlock( VMState& state ) const
 
 
 // ***************************************************************************************************************
-void NutFunction::PrintOpcode( std::ostream& out, int pos, const Instruction& op ) const
+void NutFunction::PrintOpcode( std::ostream& out, size_t pos, const Instruction& op ) const
 {
 	unsigned int code = static_cast<unsigned int>(op.op);
 	const char* codeName;
@@ -1642,9 +1642,8 @@ void NutFunction::GenerateFunctionSource( int n, std::ostream& out, const std::s
 			out << ", ";
 
 		out << m_Parameters[i];
-		
 
-		int defaultIndex = i - (m_Parameters.size() - defaults.size());
+		long long defaultIndex = i - (m_Parameters.size() - defaults.size());
 		if (defaultIndex >= 0)
 		{
 			out << " = " << defaults[defaultIndex];
@@ -1728,7 +1727,7 @@ void NutFunction::GenerateBodySource( int n, std::ostream& out ) const
 		out << std::endl;
 		out << indent(n) << "// Instructions:" << std::endl;
 
-		int64_t currentLine = 0;
+		int32_t currentLine = 0;
 		vector<LineInfo>::const_iterator lineInfo = m_LineInfos.begin();
 
 		for(size_t i = 0; i < m_Instructions.size(); ++i)

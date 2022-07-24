@@ -27,7 +27,7 @@ Error::Error( const char* format, ... )
 
 
 // ************************************************************************************************************************************
-const char* Error::what()
+const char* Error::what() const noexcept
 {
 	return m_what.c_str();
 }

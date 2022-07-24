@@ -3,8 +3,8 @@
 #include <fstream>
 #include <cstring>
 
-const char* version = "0.03";
-const char* nutVersion = "2.2.4 64-bit";
+const char* version = "0.04";
+const char* nutVersion = "2.2.5 (both 32-bit and 64-bit)";
 
 void Usage( void )
 {
