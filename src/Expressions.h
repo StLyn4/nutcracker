@@ -191,7 +191,7 @@ public:
 					{
 						const char c = *i;
 
-						if (c < 0x20 || c > 0x7e)
+						if (c > 0x00 && c < 0x20)
 						{
 							m_text += "\\x00";
 							m_text += ToHex((c >> 4) & 0x0f);
