@@ -14,7 +14,7 @@ struct indent
 	friend std::ostream& operator << ( std::ostream& os, const indent& _i )
 	{
 		for (size_t i = 0; i < _i._n; ++i)
-			os.put('\t');
+			os << "  ";
 
 		return os;
 	}

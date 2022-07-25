@@ -58,11 +58,15 @@ public:
 		{
 			GenerateCode(out, indent);
 		}
+		else if (IsEmpty())
+		{
+			out << "{}";
+		}
 		else
 		{
-			out << ::indent(indent) << '{' << std::endl;
+			out << '{' << std::endl;
 			GenerateCode(out, indent + 1);
-			out << ::indent(indent) << '}' << std::endl;
+			out << ::indent(indent) << '}';
 		}
 	}
 };
@@ -178,7 +182,7 @@ public:
 	const std::vector< StatementPtr >& Statements( void ) const
 	{
 		return m_Statements;
-	}	
+	}
 
 	virtual int GetType( void ) const
 	{
@@ -189,18 +193,20 @@ public:
 	{
 		StatementPtr prevStatement;
 		bool pendingSpace = false;
+		bool inCaseBlock = false;
 
 		for( vector< StatementPtr >::const_iterator i = m_Statements.begin(); i != m_Statements.end(); ++i )
 		{
 			StatementPtr statement = *i;
-			
+
 			if (statement->GetType() == Stat_Case)
 			{
 				if (prevStatement)
 					out << std::endl;
 
-				statement->GenerateCode(out, std::max(0, n - 1));
+				statement->GenerateCode(out, std::max(0, n));
 				pendingSpace = false;
+				inCaseBlock = true;
 				prevStatement = StatementPtr();
 				continue;
 			}
@@ -210,19 +216,17 @@ public:
 			if (prevStatement && (separatedStatement || pendingSpace))
 				out << std::endl;
 
-			statement->GenerateCode(out, n);
-
+			statement->GenerateCode(out, inCaseBlock ? n + 1 : n);
 			pendingSpace = separatedStatement;
-
 			prevStatement = statement;
 		}
 	}
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << '{' << std::endl;
+		out << '{' << std::endl;
 		GenerateBlockContentCode(out, n + 1);
-		out << ::indent(n) << '}' << std::endl;
+		out << ::indent(n) << '}';
 	}
 
 	virtual StatementPtr Postprocess( void );
@@ -242,21 +246,25 @@ private:
 private:
 	void _generateCode( std::ostream& out, int n ) const
 	{
-		out << "if (" << expression_out(m_Condition, n) << ')' << std::endl;
+		out << "if (" << expression_out(m_Condition, n) << ") ";
 		m_WhenTrue->GenerateCodeInBlock(out, n);
 
 		if (m_WhenFalse)
 		{
 			if (m_WhenFalse->GetType() == Stat_If)
 			{
-				out << ::indent(n) << "else ";
+				out << " else ";
 				static_pointer_cast<IfStatement>(m_WhenFalse)->_generateCode(out, n);
 			}
 			else
 			{
-				out << ::indent(n) << "else" << std::endl;
+				out << " else ";
 				m_WhenFalse->GenerateCodeInBlock(out, n);
+				out << std::endl;
 			}
+		}
+		else {
+			out << std::endl;
 		}
 	}
 
@@ -450,10 +458,11 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "try" << std::endl;
+		out << ::indent(n) << "try ";
 		m_Try->GenerateCodeInBlock(out, n);
-		out << ::indent(n) << "catch( " << m_CatchVariable << " )" << std::endl;
+		out << " catch(" << m_CatchVariable << ") ";
 		m_Catch->GenerateCodeInBlock(out, n);
+		out << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )
@@ -515,7 +524,7 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "  // " << m_Text << std::endl;
+		out << ::indent(n) << " // " << m_Text << std::endl;
 	}
 };
 
@@ -593,8 +602,8 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "for( ";
-		
+		out << ::indent(n) << "for (";
+
 		if (m_Initialization)
 			GenerateStatementInline(out, n, m_Initialization);
 
@@ -607,9 +616,10 @@ public:
 
 		if (m_Incrementation)
 			GenerateStatementInline(out, n, m_Incrementation);
-		
-		out << " )" << std::endl;
+
+		out << ") ";
 		m_Block->GenerateCodeInBlock(out, n);
+		out << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )
@@ -641,8 +651,9 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "while (" << expression_out(m_Condition, n) << ')' << std::endl;
+		out << ::indent(n) << "while (" << expression_out(m_Condition, n) << ") ";
 		m_Block->GenerateCodeInBlock(out, n);
+		out << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )
@@ -725,9 +736,9 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "do" << std::endl;
+		out << ::indent(n) << "do ";
 		m_Block->GenerateCodeInBlock(out, n);
-		out << ::indent(n) << "while (" << expression_out(m_Condition, n) << ");" << std::endl;
+		out << " while (" << expression_out(m_Condition, n) << ");" << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )
@@ -762,14 +773,14 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "foreach( ";
-		
+		out << ::indent(n) << "foreach (";
+
 		if (m_Key && (!m_Key->IsVariable() || static_pointer_cast<VariableExpression>(m_Key)->GetVariableName() != "@INDEX@"))
 			out << expression_out(m_Key, n) << ", ";
 
-		out << expression_out(m_Value, n) << " in " << expression_out(m_Object, n) << " )" << std::endl;
-
+		out << expression_out(m_Value, n) << " in " << expression_out(m_Object, n) << ") ";
 		m_Block->GenerateCodeInBlock(out, n);
+		out << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )
@@ -801,8 +812,9 @@ public:
 
 	virtual void GenerateCode( std::ostream& out, int n ) const
 	{
-		out << ::indent(n) << "switch(" << expression_out(m_Variable, n) << ')' << std::endl;
+		out << ::indent(n) << "switch (" << expression_out(m_Variable, n) << ") ";
 		m_Block->GenerateCodeInBlock(out, n);
+		out << std::endl;
 	}
 
 	virtual StatementPtr Postprocess( void )

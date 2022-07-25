@@ -1636,9 +1636,7 @@ void NutFunction::GenerateFunctionSource( int n, std::ostream& out, const std::s
 		if (i == 0 && m_Parameters[i] == "this")
 			continue;
 
-		if (paramsCount == 0)
-			out << ' ';
-		else
+		if (paramsCount > 0)
 			out << ", ";
 
 		out << m_Parameters[i];
@@ -1656,29 +1654,22 @@ void NutFunction::GenerateFunctionSource( int n, std::ostream& out, const std::s
 	{
 		if (paramsCount > 0)
 			out << ", ";
-		else
-			out << ' ';
 
 		out << "...";
 		paramsCount += 1;
 	}
 
-	if (paramsCount > 0)
-		out << ' ';
-
 	out << ')';
 
 	if (!m_OuterValues.empty())
 	{
-		out << " : ( " << m_OuterValues[0].name.GetString();
+		out << " : (" << m_OuterValues[0].name.GetString();
 		for( size_t i = 1; i < m_OuterValues.size(); ++i)
 			out << ", " << m_OuterValues[i].name.GetString();
-		out << " )";
+		out << ")";
 	}
 
-	out << std::endl;
-
-	out << indent(n) << "{" << std::endl;
+	out << " {" << std::endl;
 
 	GenerateBodySource(n + 1, out);
 

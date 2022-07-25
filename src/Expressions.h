@@ -1073,8 +1073,13 @@ public:
 			static_pointer_cast<NewTableExpression>(m_Attributes)->GenerateAttributesCode(out, n);
 		}
 
-		out << std::endl;
-		out << ::indent(n) << '{' << std::endl;
+		if (m_Elements.size() == 0)
+		{
+			out << "{}";
+			return;
+		}
+
+		out << " {" << std::endl;
 		for( vector< ClassElement >::const_iterator i = m_Elements.begin(); i != m_Elements.end(); ++i)
 		{
 			if (i->attributes && i->attributes->GetType() == Exp_NewTableExpression)
@@ -1090,9 +1095,12 @@ public:
 				out << "static ";
 
 			GenerateElementCode(i->key, i->value, ';', out, n + 1);
-			out << std::endl;			
-		}
 
+			if (std::next(i) != m_Elements.end())
+			{
+				out << std::endl;
+			}
+		}
 		out << ::indent(n) << '}';
 	}
 
