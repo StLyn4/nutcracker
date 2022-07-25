@@ -7,13 +7,13 @@
 // ******************************************************************************
 struct indent
 {
-	int _n;
+	size_t _n;
 
-	indent( int n ) : _n(n) {}
+	indent(size_t n ) : _n(n) {}
 
 	friend std::ostream& operator << ( std::ostream& os, const indent& _i )
 	{
-		for(int i = 0; i < _i._n; ++i)
+		for (size_t i = 0; i < _i._n; ++i)
 			os.put('\t');
 
 		return os;

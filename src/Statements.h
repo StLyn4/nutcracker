@@ -297,7 +297,7 @@ public:
 		if (m_WhenFalse)
 			m_WhenFalse = m_WhenFalse->Postprocess();
 
-		if (m_Canceled && m_WhenTrue->IsEmpty() && (!m_WhenFalse || m_WhenFalse->IsEmpty()))
+		if (m_Canceled)
 			return EmptyStatement::Get();
 
 		return Statement::Postprocess();
@@ -434,8 +434,6 @@ class TryCatchStatement : public Statement
 private:
 	StatementPtr m_Try, m_Catch;
 	std::string m_CatchVariable;
-
-
 
 public:
 	explicit TryCatchStatement( StatementPtr tryStatement, StatementPtr catchStatement, const std::string& varName )

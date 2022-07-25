@@ -316,7 +316,7 @@ public:
 		else if (stat->GetType() == Stat_If)
 		{
 			shared_ptr<IfStatement> ifStatement = static_pointer_cast<IfStatement>(stat);
-				ifStatement->Cancel();
+			ifStatement->Cancel();
 		}
 	}
 
@@ -366,7 +366,8 @@ public:
 			if (m_IP != i->start_op && (!foreachInit || m_IP < i->start_op || m_IP > i->end_op)) continue;
 
 			if (m_Stack[pos].expression && m_Stack[pos].expression->GetType() == Exp_LocalVariable 
-				&& static_pointer_cast<LocalVariableExpression>(m_Stack[pos].expression)->GetVariableName() == i->name)
+				&& static_pointer_cast<LocalVariableExpression>(m_Stack[pos].expression)->GetVariableName() == i->name
+				&& !(exp->GetType() == Exp_Operator && static_pointer_cast<OperatorExpression>(exp)->GetOperatorType() == '?:'))
 			{
 				// This variable is already initialized
 				break;
@@ -395,7 +396,7 @@ public:
 
 	void SetVar( int pos, ExpressionPtr exp, bool expIsStatementLike = false )
 	{
-		if (pos < 0 || pos >= (int)m_Stack.size())
+		if (pos < 0 || pos >= int(m_Stack.size()))
 			throw Error("Accessing non valid stack position.");
 
 		if (InitVar(pos, exp))
@@ -433,7 +434,7 @@ public:
 	}
 
 
-	ExpressionPtr& AtStack( int64_t pos )
+	ExpressionPtr& AtStack( size_t pos )
 	{
 		if (pos < 0 || pos >= m_Stack.size())
 			throw Error("Accessing non valid stack position.");
@@ -1278,8 +1279,7 @@ void NutFunction::DecompileJumpZeroInstruction( VMState& state, int arg0, int ju
 				int target1 = static_cast<unsigned char>(m_Instructions[ifBlockEndIp - 2].arg0);
 				int target2 = static_cast<unsigned char>(m_Instructions[elseBlockEndIp - 1].arg0);
 
-				if ((target1 == target2) && (target1 < m_StackSize) && state.AtStack(target1) && (state.AtStack(target1)->GetType() != Exp_LocalVariable) &&
-					stackCopy->at(target1).expression && stackCopy->at(target1).expression->GetType() != Exp_LocalVariable)
+				if ((target1 == target2) && (target1 < m_StackSize) && state.AtStack(target1) && stackCopy->at(target1).expression)
 				{
 					// Block match condition operator - try to merge destination stack variables
 					state.MergeStackVariable(condition, target1, stackCopy->at(target1), ifStatement);
@@ -1727,7 +1727,7 @@ void NutFunction::GenerateBodySource( int n, std::ostream& out ) const
 		out << std::endl;
 		out << indent(n) << "// Instructions:" << std::endl;
 
-		int32_t currentLine = 0;
+		int64_t currentLine = 0;
 		vector<LineInfo>::const_iterator lineInfo = m_LineInfos.begin();
 
 		for(size_t i = 0; i < m_Instructions.size(); ++i)

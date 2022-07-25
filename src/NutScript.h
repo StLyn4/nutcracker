@@ -32,7 +32,7 @@ public:
 private:
 	struct OuterValueInfo
 	{
-		int type;
+		int64_t type;
 		SqObject src;
 		SqObject name;
 	};
