@@ -214,13 +214,13 @@ void NutScript::LoadFromStream( std::istream& in )
 	if (reader.ReadUInt16() != 0xFAFA) 
 		throw BadFormatError();
 
-	if (reader.CheckArch() == UNKNOWN)
+	if (reader.CheckArch() == AT_UNKNOWN)
 		throw Error("NUT file compiled for different architecture that expected.");
 
 	if (reader.ReadArchInt() != 'SQIR')
 		throw BadFormatError();
 
-	if (reader.ReadArchInt() != sizeof(char))
+	if (reader.CheckCharSize() == CS_UNKNOWN)
 		throw Error("NUT file compiled for different size of char that expected.");
 
 	m_main.Load(reader);

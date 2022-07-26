@@ -3,14 +3,24 @@
 
 #include <iostream>
 #include <algorithm>
+#include <vector>
+#include <locale>
+#include <codecvt>
 #include <stdint.h>
 #include "Errors.h"
 
 enum ArchType
 {
-	UNKNOWN,
-	X32,
-	X64,
+	AT_UNKNOWN,
+	AT_X32,
+	AT_X64,
+};
+
+enum CharSize
+{
+	CS_UNKNOWN,
+	CS_NORMAL,
+	CS_WIDE,
 };
 
 // ************************************************************************************************************************************
@@ -26,11 +36,13 @@ private:
 
 public:
 	ArchType targetArch;
+	CharSize charSize;
 
 	explicit BinaryReader( std::istream& in )
 	: _in(in)
 	{
-		targetArch = UNKNOWN;
+		targetArch = AT_UNKNOWN;
+		charSize = CS_UNKNOWN;
 	}
 
 	// ******************************************************************************
@@ -41,13 +53,13 @@ public:
 		_in.seekg(2, _in.beg);
 		if (ReadInt32() == 'SQIR')
 		{
-			targetArch = X32;
+			targetArch = AT_X32;
 		}
 
 		_in.seekg(2, _in.beg);
 		if (ReadInt64() == 'SQIR')
 		{
-			targetArch = X64;
+			targetArch = AT_X64;
 		}
 
 		_in.seekg(currentPos, _in.beg);
@@ -55,171 +67,21 @@ public:
 	}
 
 	// ******************************************************************************
-	uint64_t ReadArchUInt( void )
+	CharSize CheckCharSize( void )
 	{
-		return targetArch == X32 ? ReadUInt32() : ReadUInt64();
+		switch (ReadArchInt()) {
+			case sizeof(char):
+				charSize = CS_NORMAL;
+				break;
+			case sizeof(wchar_t):
+				charSize = CS_WIDE;
+				break;
+			default:
+				charSize = CS_UNKNOWN;
+		}
+
+		return charSize;
 	}
-
-	// ******************************************************************************
-	int64_t ReadArchInt( void )
-	{
-		return targetArch == X32 ? ReadInt32() : ReadInt64();
-	}
-
-	// ******************************************************************************
-	uint32_t ReadUInt32( void )
-	{
-		uint32_t value;
-
-		//static_assert(sizeof(value) == 4, "Invalid size of uint32_t type");
-
-		_in.read((char*)&value, 4);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-	// ******************************************************************************
-	int32_t ReadInt32( void )
-	{
-		int32_t value;
-
-		//static_assert(sizeof(value) == 4, "Invalid size of int32_t type");
-
-		_in.read((char*)&value, 4);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-	// ******************************************************************************
-	uint64_t ReadUInt64( void )
-	{
-		uint64_t value;
-
-		//static_assert(sizeof(value) == 4, "Invalid size of uint64_t type");
-
-		_in.read((char*)&value, 8);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-	// ******************************************************************************
-	int64_t ReadInt64( void )
-	{
-		int64_t value;
-
-		//static_assert(sizeof(value) == 4, "Invalid size of int64_t type");
-
-		_in.read((char*)&value, 8);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	uint16_t ReadUInt16( void )
-	{
-		uint16_t value;
-
-		//static_assert(sizeof(value) == 2, "Invalid size of uint16_t");
-
-		_in.read((char*)&value, 2);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	int16_t ReadInt16( void )
-	{
-		int16_t value;
-
-		//static_assert(sizeof(value) == 2, "Invalid size of int16_t");
-
-		_in.read((char*)&value, 2);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	int8_t ReadByte( void )
-	{
-		int8_t value;
-
-		//static_assert(sizeof(value) == 1, "Invalid size of char type");
-
-		_in.read((char*)&value, 1);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	float ReadFloat32( void )
-	{
-		float value;
-
-		//static_assert(sizeof(value) == 4, "Invalid size of float type");
-
-		_in.read((char*)&value, 4);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	double ReadFloat64( void )
-	{
-		double value;
-
-		//static_assert(sizeof(value) == 8, "Invalid size of double type");
-
-		_in.read((char*)&value, 8);
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
-
-	// ******************************************************************************
-	bool ReadBool( void )
-	{
-		bool value;
-
-		_in.read((char*)&value, sizeof(bool));
-
-		if (_in.fail())
-			throw Error("I/O Error while reading from file.");
-
-		return value;
-	}
-
 
 	// ******************************************************************************
 	void Read( void* buffer, uint64_t size )
@@ -233,8 +95,41 @@ public:
 			throw Error("I/O Error while reading from file.");
 	}
 
-	std::streampos position() {
-		return _in.tellg();
+	// ******************************************************************************
+	template <typename T>
+	T ReadValue( void )
+	{
+		T value;
+		_in.read((char*)&value, sizeof(T));
+
+		if (_in.fail())
+			throw Error("I/O Error while reading from file.");
+
+		return value;
+	}
+
+	// ******************************************************************************
+	int8_t   ReadByte( void )    { return ReadValue<int8_t>();   }
+	bool     ReadBool( void )    { return ReadValue<bool>();     }
+	uint16_t ReadUInt16( void )  { return ReadValue<uint16_t>(); }
+	int16_t  ReadInt16( void )   { return ReadValue<int16_t>();  }
+	uint32_t ReadUInt32( void )  { return ReadValue<uint32_t>(); }
+	int32_t  ReadInt32( void )   { return ReadValue<int32_t>();  }
+	uint64_t ReadUInt64( void )  { return ReadValue<uint64_t>(); }
+	int64_t  ReadInt64( void )   { return ReadValue<int64_t>();  }
+	float    ReadFloat32( void ) { return ReadValue<float>();    }
+	double   ReadFloat64( void ) { return ReadValue<double>();   }
+
+	// ******************************************************************************
+	uint64_t ReadArchUInt( void )
+	{
+		return targetArch == AT_X32 ? ReadUInt32() : ReadUInt64();
+	}
+
+	// ******************************************************************************
+	int64_t ReadArchInt( void )
+	{
+		return targetArch == AT_X32 ? ReadInt32() : ReadInt64();
 	}
 
 	// ******************************************************************************
@@ -250,19 +145,30 @@ public:
 	// ******************************************************************************
 	void ReadSQString( std::string& str )
 	{
-		int64_t len = ReadArchInt();
-		str.clear();
-		str.reserve((size_t) len);
+		static std::vector<char> buffer;
+		uint64_t len = ReadArchUInt();
+		size_t bytesLen = len * (charSize == CS_WIDE ? sizeof(wchar_t) : sizeof(char));
+		size_t nullTerminatorSize = charSize == CS_WIDE ? sizeof(wchar_t) : sizeof(char);
 
-		while(len > 0)
+		if (buffer.size() < bytesLen + nullTerminatorSize)
+			buffer.resize(bytesLen + nullTerminatorSize);
+
+		Read(buffer.data(), bytesLen);
+
+		// Adding null terminator at the end of string
+		buffer.insert(buffer.begin() + bytesLen, nullTerminatorSize, '\0');
+
+		if (charSize == CS_WIDE)
 		{
-			char buffer[128];
-			int64_t chunk = std::min((int64_t) 128, len);
-
-			Read(buffer, chunk);
-
-			str.append(buffer, (size_t) chunk);
-			len -= chunk;
+			// It may behave strangely if UTF-8 encoding is used
+			using convert_type = std::codecvt_utf8<wchar_t>;
+			std::wstring_convert<convert_type, wchar_t> converter;
+			std::string convertedBuffer = converter.to_bytes((wchar_t*)buffer.data());
+			str.assign(convertedBuffer);
+		}
+		else
+		{
+			str.assign(buffer.data(), bytesLen);
 		}
 	}
 
@@ -281,5 +187,9 @@ public:
 			str.clear();
 		else
 			throw Error("Expected string object not found in source binary file.");
+	}
+
+	std::streampos position() {
+		return _in.tellg();
 	}
 };
