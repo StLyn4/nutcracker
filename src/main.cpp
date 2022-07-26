@@ -3,6 +3,10 @@
 #include <fstream>
 #include <cstring>
 
+#ifdef _WIN32
+#include "Windows.h"
+#endif
+
 const char* version = "0.04";
 const char* nutVersion = "2.2.5 (both 32-bit and 64-bit)";
 
@@ -119,6 +123,14 @@ int stricmpWrapper(char* in, const char* cmp) {
 int main( int argc, char* argv[] )
 {
 	const char* debugFunction = NULL;
+
+	#ifdef _WIN32
+	// Set console code page to UTF-8 so console known how to interpret string data
+	SetConsoleOutputCP(CP_UTF8);
+
+	// Enable buffering to prevent VS from chopping up UTF-8 byte sequences
+	setvbuf(stdout, nullptr, _IOFBF, 1000);
+	#endif
 
 	for( int i = 1; i < argc; ++i)
 	{
