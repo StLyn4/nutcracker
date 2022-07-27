@@ -1,6 +1,85 @@
-/.vscode/
-/build/
-/CMakeFiles/
-cmake_install.cmake
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories and binary files
+build/
+out/
+cmake-build-*/
+conan-cache/
+
+# CMake specific files
+CMakeLists.txt.user
 CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
 Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CMakeUserPresets.json
+CTestTestfile.cmake
+_deps
+
+# Visual studio specific files
+.vs
+.vscode
+CMakeSettings.json
+
+# [JetBrains] User-specific settings:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+
+# [JetBrains] Sensetive files:
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+
+# OS Generated Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.Trash-*
+$RECYCLE.BIN/
+.TemporaryItems
+ehthumbs.db
+Thumbs.db

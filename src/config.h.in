@@ -1,0 +1,2 @@
+#define VERSION "@PROJECT_VERSION@"
+#define NUT_VERSION "2.2.5 (both 32-bit and 64-bit)"

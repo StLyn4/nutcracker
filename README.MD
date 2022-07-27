@@ -8,4 +8,4 @@ Unfortunately a license was not provided, hence why everything in this repositor
 
 ## Description
 
-This fork's goal is to decompile the Squirrel 2.x 32-bit and 64-bit scripts.
+This fork's goal is to decompile the Squirrel 2.x (both 32-bit and 64-bit scripts).
